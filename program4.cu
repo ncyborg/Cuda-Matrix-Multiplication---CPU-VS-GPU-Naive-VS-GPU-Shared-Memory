@@ -80,6 +80,31 @@ double matrixMultCPU (int** a, int** b, int** c, int size){
 
 }
 
+__global__ void MatrixMultGPU (int* a, int* b, int* c, int size){
+
+	//gets the ID of the current thread in the block
+	int x = threadIdx.x;
+	int y = threadIdx.y; 
+	
+	int product = 0;
+	
+	for (int i = 0; i < size; i++){
+		
+		//get coordinates in array a
+		int coorA = y * size + i;
+		
+		//get coordinates in array b 
+		int coorB = x * size + i;
+		
+		//set product to what u got 
+		product += a[coorA] * b[coorB];
+	
+	}
+	
+	c[x * size + y] = product; 
+ 
+}
+
 void printArray(int** arr, int size){
 
 	for (int r = 0; r < size; r++){
@@ -91,6 +116,66 @@ void printArray(int** arr, int size){
 		}
 		cout << endl;
 	}
+
+}
+
+//copies the int** in to int* out 
+void copyArrToArr(int** in, int* out, int size){
+
+	for (int x = 0; x < size; x++){
+	
+		for (int y = 0; y < size; y++){
+		
+			out[y * size + x] = in[y][x];
+		
+		}
+	
+	}
+
+}
+
+//conducts matrix mult with inA and inB matrixes
+void executeCudaCalculations(int** inA, int** inB, int size){
+
+	//create arrays 
+	int* a;
+	int* b;
+	int* c; //array to hold c, which is result of
+	int* size;
+	
+	//copies inA and inB to a and b
+	copyArrToArr(inA, a, size); 
+	copyArrToArr(inB, b, size);
+	
+	//device variables	
+	int* da;
+	int* db;
+	int* dc;
+	
+	int memSize = size * size * sizeof(int); //technically 1D array which is size * size
+	
+	//allocate memory for the arrays 
+	cudaMalloc( (void**) &da, memSize);
+	cudaMalloc( (void**) &db, memSize);
+	cudaMalloc( (void**) &dc, memSize);
+	cudaMalloc( (void**) 
+	
+	//transfer to GPU 
+	cudaMemcpy(da, a,size, cudaMemcpyHostToDevice);
+	cudaMemcpy(db, b,size, cudaMemcpyHostToDevice);
+	
+	dim3 dimGrid(4,4);
+	dim3 dimBlock(4,4);
+	
+	MatrixMultGPU<<<<dimGrid, dimBlock>>>(da, db, dc, size);
+	
+	__syncthreads();
+	
+	cudaMemcpy(c, dc,size, cudaMemcpyHostToDevice);
+	
+	cudaFree(da);
+	cudaFree(db);
+	cudaFree(dc);
 
 }
 
@@ -123,8 +208,13 @@ int main(int argc, char** argv) {
 	cout << "Result C" << endl;
 	printArray(c, size);
 	
+	//now time to multiply a and b with cuda
+	executeCudaCalculations(a, b, size); 
+	
 	delete2DArray (a, size);
 	delete2DArray (b, size);
 	delete2DArray (c, size);
-
+	
+	
+	
 }
