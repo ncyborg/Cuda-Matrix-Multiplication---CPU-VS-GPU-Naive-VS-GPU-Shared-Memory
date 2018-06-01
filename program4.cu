@@ -80,6 +80,7 @@ double matrixMultCPU (int** a, int** b, int** c, int size){
 
 }
 
+//computes matrix multiplication on 1D arrays a and b and puts the results into c
 __global__ void MatrixMultGPU (int* a, int* b, int* c, int size){
 
 	//gets the ID of the current thread in the block
@@ -101,8 +102,26 @@ __global__ void MatrixMultGPU (int* a, int* b, int* c, int size){
 	
 	}
 	
-	c[x * size + y] = product; 
+	c[y * size + x] = product; 
  
+ 	print1DArray(c, size);
+ 
+}
+
+void print1DArray(int * arr, int size){
+
+	for (int r = 0; r < size; r++){
+	
+		for (int c = 0; c < size; c++){
+		
+			cout << setw(4) << arr[r * size + c];
+		
+		}
+		
+		cout << endl;
+		
+	}
+
 }
 
 void printArray(int** arr, int size){
@@ -114,7 +133,9 @@ void printArray(int** arr, int size){
 			cout << setw(4) << arr[r][c] << " ";
 				
 		}
+		
 		cout << endl;
+	
 	}
 
 }
@@ -122,11 +143,11 @@ void printArray(int** arr, int size){
 //copies the int** in to int* out 
 void copyArrToArr(int** in, int* out, int size){
 
-	for (int x = 0; x < size; x++){
+	for (int r = 0; r < size; r++){
 	
-		for (int y = 0; y < size; y++){
+		for (int c = 0; c < size; c++){
 		
-			out[y * size + x] = in[y][x];
+			out[r * size + c] = in[r][c];
 		
 		}
 	
@@ -179,21 +200,27 @@ void executeCudaCalculations(int** inA, int** inB, int size){
 	cudaMemcpy(db, b,size, cudaMemcpyHostToDevice);
 	
 	dim3 dimGrid(4,4);
-	dim3 dimBlock(4,4);
+	dim3 dimBlock(size, size);
 	
 	cout << "executing multiplication " <<endl;
 	
-	MatrixMultGPU<<<dimGrid, dimBlock>>>(da, db, dc, size);
+	MatrixMultGPU<<<1, dimBlock>>>(da, db, dc, size);
 	
 	cudaDeviceSynchronize();
 	
 	cout << "Transfer from gpu to cpu" << endl;
 	
-	cudaMemcpy(c, dc,size, cudaMemcpyHostToDevice);
+	cudaMemcpy(c, dc , size, cudaMemcpyHostToDevice);
+
+	cout << "GPU A" << endl;
+	print1DArray(a, size);
+	cout << "GPU B" << endl;
+	print1DArray(b, size);
+	cout << "GPU results c" << endl;
+	print1DArray(c, size);
 	
-	cudaFree(da);
-	cudaFree(db);
-	cudaFree(dc);
+	free(a); free(b); free(c);
+	cudaFree(da);cudaFree(db);cudaFree(dc);
 
 }
 
