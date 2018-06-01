@@ -138,28 +138,42 @@ void copyArrToArr(int** in, int* out, int size){
 void executeCudaCalculations(int** inA, int** inB, int size){
 
 	//create arrays 
+	
+	cout << "creating cuda arrays" << endl;
+	
 	int* a;
 	int* b;
 	int* c; //array to hold c, which is result of
-	int* size;
+	
+	cout << "copying CPU arrays to local CPU 1D arrays" << endl;
+	
+	
+	int memSize = size * size * sizeof(int); //technically 1D array which is size * size
+	
+	a = (int *)malloc(memSize); 
+	b = (int *)malloc(memSize); 
+	c = (int *)malloc(memSize); 
 	
 	//copies inA and inB to a and b
 	copyArrToArr(inA, a, size); 
 	copyArrToArr(inB, b, size);
+	
+	cout << "creating device variables" << endl;
 	
 	//device variables	
 	int* da;
 	int* db;
 	int* dc;
 	
-	int memSize = size * size * sizeof(int); //technically 1D array which is size * size
+	cout << "allocating memory on GPU" << endl;
 	
 	//allocate memory for the arrays 
 	cudaMalloc( (void**) &da, memSize);
 	cudaMalloc( (void**) &db, memSize);
 	cudaMalloc( (void**) &dc, memSize);
-	cudaMalloc( (void**) 
-	
+
+	cout << "transfering memory to gpu" << endl;
+
 	//transfer to GPU 
 	cudaMemcpy(da, a,size, cudaMemcpyHostToDevice);
 	cudaMemcpy(db, b,size, cudaMemcpyHostToDevice);
@@ -167,9 +181,13 @@ void executeCudaCalculations(int** inA, int** inB, int size){
 	dim3 dimGrid(4,4);
 	dim3 dimBlock(4,4);
 	
-	MatrixMultGPU<<<<dimGrid, dimBlock>>>(da, db, dc, size);
+	cout << "executing multiplication " <<endl;
 	
-	__syncthreads();
+	MatrixMultGPU<<<dimGrid, dimBlock>>>(da, db, dc, size);
+	
+	cudaDeviceSynchronize();
+	
+	cout << "Transfer from gpu to cpu" << endl;
 	
 	cudaMemcpy(c, dc,size, cudaMemcpyHostToDevice);
 	
@@ -193,14 +211,14 @@ int main(int argc, char** argv) {
 	int size = stoi(s);
 	
 	int** a = initialize2DArray(size);
-	int** b = initialize2DArray(size); //switch them around so you can multiply together properly
+	int** b = initialize2DArray(size); 
 	int** c = initialize2DArray(size); //has to be of size row * row
 	
 	random_ints(a, size, 73);
 	random_ints(b, size, 11);
 	
 	matrixMultCPU(a,b,c,size);
-	
+	cout << "CPU calculations" << endl;
 	cout << "A" << endl;
 	printArray(a, size);
 	cout << "B" << endl;
