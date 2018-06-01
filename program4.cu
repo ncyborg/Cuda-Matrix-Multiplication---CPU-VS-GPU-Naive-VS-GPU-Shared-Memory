@@ -80,34 +80,6 @@ double matrixMultCPU (int** a, int** b, int** c, int size){
 
 }
 
-//computes matrix multiplication on 1D arrays a and b and puts the results into c
-__global__ void MatrixMultGPU (int* a, int* b, int* c, int size){
-
-	//gets the ID of the current thread in the block
-	int x = threadIdx.x;
-	int y = threadIdx.y; 
-	
-	int product = 0;
-	
-	for (int i = 0; i < size; i++){
-		
-		//get coordinates in array a
-		int coorA = y * size + i;
-		
-		//get coordinates in array b 
-		int coorB = x * size + i;
-		
-		//set product to what u got 
-		product += a[coorA] * b[coorB];
-	
-	}
-	
-	c[y * size + x] = product; 
- 
- 	print1DArray(c, size);
- 
-}
-
 void print1DArray(int * arr, int size){
 
 	for (int r = 0; r < size; r++){
@@ -138,6 +110,32 @@ void printArray(int** arr, int size){
 	
 	}
 
+}
+
+//computes matrix multiplication on 1D arrays a and b and puts the results into c
+__global__ void MatrixMultGPU (int* a, int* b, int* c, int size){
+
+	//gets the ID of the current thread in the block
+	int x = threadIdx.x;
+	int y = threadIdx.y; 
+	
+	int product = 0;
+	
+	for (int i = 0; i < size; i++){
+		
+		//get coordinates in array a
+		int coorA = y * size + i;
+		
+		//get coordinates in array b 
+		int coorB = x * size + i;
+		
+		//set product to what u got 
+		product += a[coorA] * b[coorB];
+	
+	}
+	
+	c[y * size + x] = product; 
+ 
 }
 
 //copies the int** in to int* out 
@@ -210,7 +208,7 @@ void executeCudaCalculations(int** inA, int** inB, int size){
 	
 	cout << "Transfer from gpu to cpu" << endl;
 	
-	cudaMemcpy(c, dc , size, cudaMemcpyHostToDevice);
+	cudaMemcpy(c, dc , size, cudaMemcpyDeviceToHost);
 
 	cout << "GPU A" << endl;
 	print1DArray(a, size);
