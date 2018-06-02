@@ -127,7 +127,7 @@ __global__ void MatrixMultGPU (int* a, int* b, int* c, int size){
 		int coorA = y * size + i;
 		
 		//get coordinates in array b 
-		int coorB = x * size + i;
+		int coorB = i * size + x;
 		
 		//set product to what u got 
 		product += a[coorA] * b[coorB];
@@ -194,8 +194,8 @@ void executeCudaCalculations(int** inA, int** inB, int size){
 	cout << "transfering memory to gpu" << endl;
 
 	//transfer to GPU 
-	cudaMemcpy(da, a,size, cudaMemcpyHostToDevice);
-	cudaMemcpy(db, b,size, cudaMemcpyHostToDevice);
+	cudaMemcpy(da, a, memSize, cudaMemcpyHostToDevice);
+	cudaMemcpy(db, b, memSize, cudaMemcpyHostToDevice);
 	
 	dim3 dimGrid(4,4);
 	dim3 dimBlock(size, size);
@@ -208,7 +208,7 @@ void executeCudaCalculations(int** inA, int** inB, int size){
 	
 	cout << "Transfer from gpu to cpu" << endl;
 	
-	cudaMemcpy(c, dc , size, cudaMemcpyDeviceToHost);
+	cudaMemcpy(c, dc , memSize, cudaMemcpyDeviceToHost);
 
 	cout << "GPU A" << endl;
 	print1DArray(a, size);
