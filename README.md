@@ -14,4 +14,6 @@ First test is to test how the calculation speed compares as the array size incre
 Second test is to test how the calculation speed compares as the array size increases but the block size stays the same 4 * 4 
 with a total of 16 threads per block
 
-Third test is to test how the calculation speed compares as the 
+Third test is to test how the calculation speed compares as the array size increases but the block size stays at the max threads per block 32 * 32. 
+
+Results: we found that CPU is faster with small vector sizes in general whereas with very large data sets GPU is much faster
